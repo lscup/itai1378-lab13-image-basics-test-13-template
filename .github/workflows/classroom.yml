@@ -1,0 +1,88 @@
+name: Autograding Tests
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install jupyter nbconvert pytest
+
+    - name: Install test dependencies
+      run: pip install matplotlib opencv-python && python3 -c "import base64; exec(base64.b64decode('aW1wb3J0IG51bXB5IGFzIG5wCnRyeToKICAgIGZyb20gUElMIGltcG9ydCBJbWFnZQogICAgYXJyID0gbnAuemVyb3MoKDI1NiwgMjU2LCAzKSwgZHR5cGU9bnAudWludDgpCiAgICBhcnJbMDoxMjgsIDA6MTI4XSA9IFsyMDAsIDUwLCA1MF0KICAgIGFyclswOjEyOCwgMTI4OjI1Nl0gPSBbNTAsIDIwMCwgNTBdCiAgICBhcnJbMTI4OjI1NiwgMDoxMjhdID0gWzUwLCA1MCwgMjAwXQogICAgYXJyWzEyODoyNTYsIDEyODoyNTZdID0gWzIwMCwgMjAwLCA1MF0KICAgIGltZyA9IEltYWdlLmZyb21hcnJheShhcnIsICdSR0InKQogICAgaW1nLnNhdmUoJ3NhbXBsZS5qcGcnKQogICAgaW1nLnNhdmUoJ3NhbXBsZS5wbmcnKQpleGNlcHQgRXhjZXB0aW9uOgogICAgcGFzcwp0cnk6CiAgICBpbXBvcnQgcGFuZGFzIGFzIHBkCiAgICBkZiA9IHBkLkRhdGFGcmFtZSh7J2lkJzogbGlzdChyYW5nZSgyMCkpLCAndmFsdWUnOiBbaSoqMiBmb3IgaSBpbiByYW5nZSgyMCldLCAnbGFiZWwnOiBbJ2l0ZW1fJytzdHIoaSkgZm9yIGkgaW4gcmFuZ2UoMjApXX0pCiAgICBkZi50b19jc3YoJ3NhbXBsZS5jc3YnLCBpbmRleD1GYWxzZSkKZXhjZXB0IEV4Y2VwdGlvbjoKICAgIHBhc3MKb3Blbignc2FtcGxlLnR4dCcsICd3Jykud3JpdGUoJ0hlbGxvIFdvcmxkXG5MaW5lIDJcbkxpbmUgM1xuJykK').decode())"
+
+    - name: testnotebookimports
+      id: testnotebookimports
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: "Test Notebook Imports"
+        command: jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 notebook.ipynb --stdout
+        timeout: 90
+        max-score: 20
+
+    - name: testimageloading
+      id: testimageloading
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: "Test Image Loading"
+        command: jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 notebook.ipynb --stdout
+        timeout: 90
+        max-score: 20
+
+    - name: testimageproperties
+      id: testimageproperties
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: "Test Image Properties"
+        command: jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 notebook.ipynb --stdout
+        timeout: 90
+        max-score: 20
+
+    - name: testcolorconversion
+      id: testcolorconversion
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: "Test Color Conversion"
+        command: jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 notebook.ipynb --stdout
+        timeout: 90
+        max-score: 20
+
+    - name: testdisplayfunctions
+      id: testdisplayfunctions
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: "Test Display Functions"
+        command: jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 notebook.ipynb --stdout
+        timeout: 90
+        max-score: 20
+
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        TESTNOTEBOOKIMPORTS_RESULTS: "${{steps.testnotebookimports.outputs.result}}"
+        TESTIMAGELOADING_RESULTS: "${{steps.testimageloading.outputs.result}}"
+        TESTIMAGEPROPERTIES_RESULTS: "${{steps.testimageproperties.outputs.result}}"
+        TESTCOLORCONVERSION_RESULTS: "${{steps.testcolorconversion.outputs.result}}"
+        TESTDISPLAYFUNCTIONS_RESULTS: "${{steps.testdisplayfunctions.outputs.result}}"
+      with:
+        runners: testnotebookimports,testimageloading,testimageproperties,testcolorconversion,testdisplayfunctions
